@@ -44,6 +44,8 @@ RUN curl -L --silent                     ${DOWNLOAD_URL}${STASH_VERSION}.tar.gz 
     && chown -R ${RUN_USER}:${RUN_GROUP} ${STASH_INSTALL_DIR}/work               \
     && chown -R ${RUN_USER}:${RUN_GROUP} ${STASH_INSTALL_DIR}/conf
 
+ADD mysql-connector-java-5.1.34-bin.jar $STASH_INSTALL_DIR/lib
+
 USER ${RUN_USER}:${RUN_GROUP}
 
 VOLUME ["${STASH_INSTALL_DIR}"]
