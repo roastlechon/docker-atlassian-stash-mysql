@@ -24,17 +24,16 @@ RUN apt-get install -y wget git default-jre
 
 RUN sudo /bin/sh -c 'echo JAVA_HOME=$(readlink -f /usr/bin/java | sed "s:/jre/bin/java::") >> /etc/environment'
 RUN sudo /bin/sh -c 'echo STASH_HOME=${STASH_HOME} >> /etc/environment'
-RUN source /etc/environment
 
 RUN mkdir -p ${STASH_INSTALL_DIR}
 RUN mkdir -p ${STASH_HOME}
 
-RUN wget -P /tmp ${DOWNLOAD_URL} && cd /tmp
-RUN tar zxf atlassian-stash-3.7.1.tar.gz
-RUN mv /tmp/atlassian-stash-3.7.1/* ${STASH_INSTALL_DIR}
+RUN wget -P /tmp ${DOWNLOAD_URL}
+RUN tar zxf /tmp/atlassian-stash-3.7.1.tar.gz -C /tmp
+RUN mv /tmp/atlassian-stash-3.7.1/* ${STASH_INSTALL_DIR}/
 
-RUN wget -P /tmp http://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-5.1.34.tar.gz && cd /tmp
-RUN tar zxf mysql-connector-java-5.1.34.tar.gz
+RUN wget -P /tmp http://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-5.1.34.tar.gz
+RUN tar zxf /tmp/mysql-connector-java-5.1.34.tar.gz -C /tmp
 RUN mv mysql-connector-java-5.1.34/mysql-connector-java-5.1.34-bin.jar ${STASH_INSTALL_DIR}/lib/
 
 RUN mkdir /etc/service/stash
