@@ -1,62 +1,47 @@
-FROM java:openjdk-7-jre
-MAINTAINER Atlassian Stash Team
+FROM phusion/baseimage:0.9.12
 
+ENV HOME /root
+
+RUN /etc/my_init.d/00_regen_ssh_host_keys.sh
+
+CMD ["/sbin/my_init"]
+
+# Some Environment Variables
+ENV DEBIAN_FRONTEND noninteractive
 
 ENV STASH_VERSION 3.7.1
 
-ENV DOWNLOAD_URL        https://downloads.atlassian.com/software/stash/downloads/atlassian-stash-
+ENV DOWNLOAD_URL https://downloads.atlassian.com/software/stash/downloads/atlassian-stash-3.7.1.tar.gz
 
 # https://confluence.atlassian.com/display/STASH/Stash+home+directory
-ENV STASH_HOME          /var/atlassian/application-data/stash
+ENV STASH_HOME /var/atlassian/application-data/stash
 
 # Install Atlassian Stash to the following location
-ENV STASH_INSTALL_DIR   /opt/atlassian/stash
+ENV STASH_INSTALL_DIR /opt/atlassian/stash
 
+RUN apt-get update
+RUN apt-get install -y wget git default-jre
 
+RUN sudo /bin/sh -c 'echo JAVA_HOME=$(readlink -f /usr/bin/java | sed "s:/jre/bin/java::") >> /etc/environment'
+RUN sudo /bin/sh -c 'echo STASH_HOME=${STASH_HOME} >> /etc/environment'
+RUN source /etc/environment
 
-# Use the default unprivileged account. This could be considered bad practice
-# on systems where multiple processes end up being executed by 'daemon' but
-# here we only ever run one process anyway.
-ENV RUN_USER            daemon
-ENV RUN_GROUP           daemon
+RUN mkdir -p ${STASH_INSTALL_DIR}
+RUN mkdir -p ${STASH_HOME}
 
+RUN wget -P /tmp ${DOWNLOAD_URL} && cd /tmp
+RUN tar zxf atlassian-stash-3.7.1.tar.gz
+RUN mv /tmp/atlassian-stash-3.7.1/* ${STASH_INSTALL_DIR}
 
-# Install git, download and extract Stash and create the required directory layout.
-# Try to limit the number of RUN instructions to minimise the number of layers that will need to be created.
-RUN apt-get update -qq                                                            \
-    && apt-get install -y --no-install-recommends                                 \
-            git                                                                   \
-    && apt-get clean autoclean                                                    \
-    && apt-get autoremove --yes                                                   \
-    && rm -rf                  /var/lib/{apt,dpkg,cache,log}/
+RUN wget -P /tmp http://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-5.1.34.tar.gz && cd /tmp
+RUN tar zxf mysql-connector-java-5.1.34.tar.gz
+RUN mv mysql-connector-java-5.1.34/mysql-connector-java-5.1.34-bin.jar ${STASH_INSTALL_DIR}/lib/
 
-RUN mkdir -p                             $STASH_INSTALL_DIR
+RUN mkdir /etc/service/stash
+ADD runit/stash.sh /etc/service/stash/run
+RUN chmod +x /etc/service/stash/run
 
-
-RUN curl -L --silent                     ${DOWNLOAD_URL}${STASH_VERSION}.tar.gz | tar -xz --strip=1 -C "$STASH_INSTALL_DIR" \
-    && mkdir -p                          ${STASH_INSTALL_DIR}/conf/Catalina      \
-    && chmod -R 700                      ${STASH_INSTALL_DIR}/conf/Catalina      \
-    && chmod -R 700                      ${STASH_INSTALL_DIR}/logs               \
-    && chmod -R 700                      ${STASH_INSTALL_DIR}/temp               \
-    && chmod -R 700                      ${STASH_INSTALL_DIR}/work               \
-    && chown -R ${RUN_USER}:${RUN_GROUP} ${STASH_INSTALL_DIR}/logs               \
-    && chown -R ${RUN_USER}:${RUN_GROUP} ${STASH_INSTALL_DIR}/temp               \
-    && chown -R ${RUN_USER}:${RUN_GROUP} ${STASH_INSTALL_DIR}/work               \
-    && chown -R ${RUN_USER}:${RUN_GROUP} ${STASH_INSTALL_DIR}/conf
-
-ADD mysql-connector-java-5.1.34-bin.jar $STASH_INSTALL_DIR/lib
-
-USER ${RUN_USER}:${RUN_GROUP}
-
-VOLUME ["${STASH_INSTALL_DIR}"]
-
-# HTTP Port
 EXPOSE 7990
-
-# SSH Port
 EXPOSE 7999
 
-WORKDIR $STASH_INSTALL_DIR
-
-# Run in foreground
-CMD ["./bin/start-stash.sh", "-fg"]
+RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
