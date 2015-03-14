@@ -34,7 +34,7 @@ RUN mv /tmp/atlassian-stash-3.7.1/* ${STASH_INSTALL_DIR}/
 
 RUN wget -P /tmp http://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-5.1.34.tar.gz
 RUN tar zxf /tmp/mysql-connector-java-5.1.34.tar.gz -C /tmp
-RUN mv mysql-connector-java-5.1.34/mysql-connector-java-5.1.34-bin.jar ${STASH_INSTALL_DIR}/lib/
+RUN mv /tmp/mysql-connector-java-5.1.34/mysql-connector-java-5.1.34-bin.jar ${STASH_INSTALL_DIR}/lib/
 
 RUN mkdir /etc/service/stash
 ADD runit/stash.sh /etc/service/stash/run
