@@ -9,8 +9,6 @@ CMD ["/sbin/my_init"]
 # Some Environment Variables
 ENV DEBIAN_FRONTEND noninteractive
 
-ENV STASH_VERSION 3.7.1
-
 ENV DOWNLOAD_URL https://downloads.atlassian.com/software/stash/downloads/atlassian-stash-3.7.1.tar.gz
 
 # https://confluence.atlassian.com/display/STASH/Stash+home+directory
